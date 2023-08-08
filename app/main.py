@@ -1,29 +1,59 @@
-"""Main py"""
-
-from fastapi import FastAPI
-from database import insert, create_db
-from models import Employee
+"""main.py"""
+from fastapi import FastAPI, HTTPException
+from models import Employee, EmployeeCreate
+from database import create_table
+import sqlite3
 
 app = FastAPI()
 
 @app.on_event("startup")
 async def startup():
-    create_db()
+    create_table()
 
-# @app.get("/employees/")
-# async def get_employee():
-#     passimport
+@app.get("/employees/")
+async def get_employees():
+    connection = sqlite3.connect("data.db")
+    cursor = connection.execute("SELECT * FROM employees")
+    employees = cursor.fetchall()
+    connection.close()
+    return employees
 
+@app.get("/employees/{employee_id}")
+async def get_employee(employee_id: int):
+    connection = sqlite3.connect("data.db")
+    cursor = connection.execute("SELECT * FROM employees WHERE id=?", (employee_id,))
+    employee = cursor.fetchone()
+    connection.close()
+    if not employee:
+        raise HTTPException(status_code=404, detail="Employee not found")
+    return employee
 
-@app.post("/employees")
-async def add_employee(employee: Employee):
-    insert(employee.id, employee.name, employee.department)
+@app.post("/employees/")
+async def add_employee(employee: EmployeeCreate):
+    connection = sqlite3.connect("data.db")
+    cursor = connection.cursor()
+    cursor.execute(
+        "INSERT INTO employees (name, department) VALUES (?, ?)",
+        (employee.name, employee.department)
+    )
+    connection.commit()
+    connection.close()
     return {"message": "Employee added successfully"}
 
-# @app.delete("/employee/{employee_id}")
-# async def delete_employee():
-#     pass
+@app.delete("/employees/{employee_id}")
+async def delete_employee(employee_id: int):
+    connection = sqlite3.connect("data.db")
+    cursor = connection.execute("DELETE FROM employees WHERE id=?", (employee_id,))
+    connection.commit()
+    connection.close()
+    return {"message": f"Employee with ID {employee_id} deleted"}
 
-# @app.put("/employees/{empoyee_id}/{column}/{new_value}")
-# async def update_employee():
-#     pass
+@app.put("/employees/{employee_id}/{column}/{new_value}")
+async def update_employee(employee_id: int, column: str, new_value: str):
+    connection = sqlite3.connect("data.db")
+    cursor = connection.execute(
+        f"UPDATE employees SET {column}=? WHERE id=?", (new_value, employee_id)
+    )
+    connection.commit()
+    connection.close()
+    return {"message": f"Employee with ID {employee_id} updated"}

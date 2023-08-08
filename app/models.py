@@ -1,10 +1,10 @@
-# Creating the Employee Class
+# models.py
 
 from pydantic import BaseModel
 
-class Employee(BaseModel):
-    id :int
+class EmployeeCreate(BaseModel):
     name: str
     department: str
 
-
+class Employee(EmployeeCreate):
+    id: int
