@@ -1,10 +1,11 @@
-# database.py
-
+"""Creating the database for the RESTAPI project."""
 import sqlite3
 
 
 def create_table():
-    connection = sqlite3.connect("data.db")
+    """ Function to create the table.
+    """
+    connection = sqlite3.connect("./data.db")
     cursor = connection.cursor()
     cursor.execute(
         """
